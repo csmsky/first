@@ -16,10 +16,12 @@ Imports System.Security.Principal
 Imports System.Diagnostics
 
 
+
 Public Class mainform
     'NOTE: If you can't connect to the database, check the connection in "App.config", replace the connection if needed. Make sure to insert the encrypted data.
     'Dim connString As String = "Server=localhost;Database=amusement;Uid=root;Pwd=;"
     Inherits System.Windows.Forms.Form
+    Public CurrentCustomerName As String = ""
     Dim total As Decimal = 0
 
     'for or_tbl id
@@ -27,6 +29,7 @@ Public Class mainform
 
     'for calling connection in App.config
     Dim strConn As String = FDEandD()
+
 
     'Get the CurrentTime and Date
     Dim dateAndTime As String = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
@@ -1496,7 +1499,11 @@ Public Class mainform
 
         End Try
         _detailsForm.SetTransactionDetails("Student", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
+
     End Sub
 
     Private Sub ButtonPWD_Click(sender As Object, e As EventArgs) Handles ButtonPWD.Click
@@ -1604,7 +1611,10 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("PWD(20%)", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub ButtonSenior_Click(sender As Object, e As EventArgs) Handles ButtonSenior.Click
@@ -1712,7 +1722,11 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("Senior(20%)", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
+
     End Sub
 
     Private Sub ButtonZeroRated_Click(sender As Object, e As EventArgs) Handles ButtonZeroRated.Click
@@ -1800,7 +1814,10 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("Zero Rated", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub ButtonEmployee_Click(sender As Object, e As EventArgs) Handles ButtonEmployee.Click
@@ -1904,7 +1921,10 @@ Public Class mainform
 
         End Try
         _detailsForm.SetTransactionDetails("BDAY Celeb(50%)", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub ButtonOrigin_Click(sender As Object, e As EventArgs) Handles ButtonRegularRide.Click
@@ -1912,6 +1932,10 @@ Public Class mainform
         Dim RideSelectionForm As New origin
         RideSelectionForm.Show()
         TextBoxQty.Text = "0"
+        Button14.Enabled = True
+        ButtonAddItem.Enabled = True
+        CurrentCustomerName = "Guest"
+
     End Sub
 
     Private Sub ButtonTrainingMode_Click(sender As Object, e As EventArgs) Handles ButtonTrainingMode.Click
@@ -3224,7 +3248,10 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("Solo Parent(10%)", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub TextBoxQty_TextChanged(sender As Object, e As EventArgs) Handles TextBoxQty.TextChanged
@@ -3313,6 +3340,8 @@ Public Class mainform
             ListViewCashier.Columns.Add("TYPE", 70)
             ListViewCashier.Columns.Add("Item_Code", 70)
             ListViewCashier.Columns.Add("Less_Vat", 70)
+            ListViewCashier.Columns.Add("Customer Name", 150)
+            ListViewCashier.Columns(ListViewCashier.Columns.Count - 1).DisplayIndex = 0
 
             ' Set ListView properties For ListviewCashier
             ListViewWristband.View = View.Details
@@ -3330,11 +3359,15 @@ Public Class mainform
             secondscreen.ListViewCustomerView.GridLines = False
 
             ' Add column header
+            ' Add this Clear() line to fix the repeating Qty and Ride columns!
+            secondscreen.ListViewCustomerView.Columns.Clear()
             secondscreen.ListViewCustomerView.Columns.Add("Qty", 50)
             secondscreen.ListViewCustomerView.Columns.Add("Ride Description", 321)
             secondscreen.ListViewCustomerView.Columns.Add("Price", 85)
+            secondscreen.ListViewCustomerView.Columns.Add("Total", 85)
             secondscreen.ListViewCustomerView.Columns.Add("Discount", 85)
             secondscreen.ListViewCustomerView.Columns.Add("Amount", 85)
+
 
             ' =========================================================
             ' LOAD PAYMENT METHODS FROM DATABASE (AS IS)
@@ -3368,6 +3401,13 @@ Public Class mainform
     End Sub
     Private Sub ButtonAddItem_Click(sender As Object, e As EventArgs) Handles ButtonAddItem.Click
 
+        ' Delete the verification row right before adding the real final row
+        For i As Integer = secondscreen.ListViewCustomerView.Items.Count - 1 To 0 Step -1
+            If secondscreen.ListViewCustomerView.Items(i).Tag IsNot Nothing AndAlso secondscreen.ListViewCustomerView.Items(i).Tag.ToString() = "TEMP_NAME" Then
+                secondscreen.ListViewCustomerView.Items.RemoveAt(i)
+            End If
+        Next
+
         'Generate OR_No
         auto()
         'MsgBox(TextBoxBarcode.Text)
@@ -3393,6 +3433,9 @@ Public Class mainform
                 item.SubItems.Add(LabelType.Text)
                 item.SubItems.Add(label_code.Text)
                 item.SubItems.Add(LabelLessVat.Text)
+
+                ' ADDED CUSTOMER NAME HERE
+                item.SubItems.Add(CurrentCustomerName)
 
                 item.SubItems(4).ForeColor = Color.Red
 
@@ -3438,6 +3481,9 @@ Public Class mainform
                 item.SubItems.Add(label_code.Text)
                 item.SubItems.Add(LabelLessVat.Text)
 
+                ' ADDED CUSTOMER NAME HERE
+                item.SubItems.Add(CurrentCustomerName)
+
                 item.SubItems(4).ForeColor = Color.Red
                 item.SubItems(5).ForeColor = Color.Red
 
@@ -3478,7 +3524,13 @@ Public Class mainform
 
             End If
 
+            ' --- UPDATED BUTTON LOCK/UNLOCK LOGIC HERE ---
             ButtonComputeTotal.Enabled = True
+            ButtonAddItem.Enabled = False
+            Button14.Enabled = False
+
+            ' Clear out the name for the next item!
+            CurrentCustomerName = ""
 
         Catch ex As Exception
             MessageBox.Show("Error: " & ex.Message)
@@ -3487,6 +3539,7 @@ Public Class mainform
         End Try
 
     End Sub
+
 
     Private Sub CheckColumnData()
         Try
@@ -5720,11 +5773,13 @@ Public Class mainform
         Dim item As New ListViewItem(TextBoxQty.Text)
         item.SubItems.Add(LabelAvailed.Text)
         item.SubItems.Add(TextBoxTripFare.Text)
+        item.SubItems.Add(LabelQtyPrice.Text)
         item.SubItems.Add(LabelDiscount.Text)
         item.SubItems.Add(LabelTotal.Text)
 
         secondscreen.ListViewCustomerView.Items.Add(item)
     End Sub
+
 
     Private Sub ItemInsertIntoTicketTracsaction()
         Try
@@ -6030,7 +6085,10 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("NAAC(20%)", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub ButtonDiplomat_Click(sender As Object, e As EventArgs) Handles ButtonDiplomat.Click
@@ -6121,7 +6179,10 @@ Public Class mainform
             LabelType.Text = "Regular"
         End Try
         _detailsForm.SetTransactionDetails("Diplomat", or_no)
-        _detailsForm.ShowDialog()
+        ' Open popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True
+        End If
     End Sub
 
     Private Sub Button16_Click(sender As Object, e As EventArgs) Handles Button16.Click
@@ -7004,10 +7065,22 @@ Public Class mainform
     End Sub
 
     Private Sub Button14_Click(sender As Object, e As EventArgs) Handles Button14.Click
+        ' 1. Check if Quantity is missing
+        If String.IsNullOrWhiteSpace(TextBoxQty.Text) Then
+            MessageBox.Show("Please enter a Quantity and select a Ride Type first!", "Missing Info")
+            Exit Sub
+        End If
+
+        ' 2. Pass the data to the popup
         Dim or_no As String = TextBoxBarcode.Text
-        _detailsForm.SetTransactionDetails("Regular", or_no)
-        _detailsForm.ShowDialog()
+        _detailsForm.SetTransactionDetails("Regular", or_no, TextBoxQty.Text)
+
+        ' 3. Show popup. If they click confirm, unlock the Add Item button!
+        If _detailsForm.ShowDialog() = DialogResult.OK Then
+            ButtonAddItem.Enabled = True ' (Change ButtonAddItem to your actual button name if it's different)
+        End If
     End Sub
+
 
     Public Sub EnableKeypadNumber()
         Button1.Enabled = True
@@ -7052,6 +7125,10 @@ Public Class mainform
     End Sub
 
     Private Sub Label1_Click(sender As Object, e As EventArgs) Handles Label1.Click
+
+    End Sub
+
+    Private Sub ListViewCashier_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ListViewCashier.SelectedIndexChanged
 
     End Sub
 End Class

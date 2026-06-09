@@ -9,6 +9,7 @@ Public Class InputCustomerDetails
     ' Variables to remember context
     Private _transType As String = ""
     Private _currentOR As String = "" '<-- Variable to hold the OR number
+    Private _currentQty As String = ""
 
     ' In-memory pending list (NOT yet saved to DB)
     Private _pendingCustomers As New List(Of CustomerInfo)
@@ -23,11 +24,15 @@ Public Class InputCustomerDetails
     Private WithEvents ButtonConfirm As New Button()
 
     ' Call this from your Main POS Form to pass the Type AND the OR Number
-    Public Sub SetTransactionDetails(type As String, orNo As String)
+    Public Sub SetTransactionDetails(type As String, orNo As String, Optional qty As String = "")
         _transType = type
         _currentOR = orNo
-        Me.Text = "Enter Details for: " & type
+        _currentQty = qty
+
+        ' This will change the window title to clearly show the ride info!
+        Me.Text = "Registering " & qty & "x " & type & " Rides"
     End Sub
+
 
     Private Sub InputCustomerDetails_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
@@ -92,9 +97,29 @@ Public Class InputCustomerDetails
             .TransType = _transType
         }
 
-        If _editingIndex >= 0 AndAlso _editingIndex < _pendingCustomers.Count Then
+        ' 1. Delete any old verification rows first
+        For i As Integer = secondscreen.ListViewCustomerView.Items.Count - 1 To 0 Step -1
+            If secondscreen.ListViewCustomerView.Items(i).Tag IsNot Nothing AndAlso secondscreen.ListViewCustomerView.Items(i).Tag.ToString() = "TEMP_NAME" Then
+                secondscreen.ListViewCustomerView.Items.RemoveAt(i)
+            End If
+        Next
+
+        ' 2. Blast the new name directly into the wide Ride Description column
+        Dim tempItem As New ListViewItem("") ' Qty column
+        tempItem.SubItems.Add("Name Verification: " & newCustomer.Name)
+        tempItem.SubItems.Add("") ' Price
+        tempItem.SubItems.Add("") ' Total
+        tempItem.SubItems.Add("") ' Discount
+        tempItem.SubItems.Add("") ' Amount
+
+        tempItem.Tag = "TEMP_NAME"
+        secondscreen.ListViewCustomerView.Items.Add(tempItem)
+
+
+
+        If _editingIndex >= 0 AndAlso _editingIndex <_pendingCustomers.Count Then
             ' Update existing entry
-            _pendingCustomers(_editingIndex) = newCustomer
+        _pendingCustomers(_editingIndex) = newCustomer
             _editingIndex = -1
             Button1.Text = "(+)Add"
         Else
@@ -112,6 +137,18 @@ Public Class InputCustomerDetails
         TextBoxGuestAddress.Clear()
 
         RefreshGrid()
+    End Sub
+
+    Private Sub InputCustomerDetails_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        ' Clear the text fields when the form is closed
+        TextBoxGuestName.Clear()
+        TextBoxGuestID.Clear()
+        TextBoxGuestTIN.Clear()
+        TextBoxGuestAddress.Clear()
+
+        ' Reset the Add/Update button state
+        Button1.Text = "(+)Add"
+        _editingIndex = -1
     End Sub
 
     Private Sub ButtonEdit_Click(sender As Object, e As EventArgs) Handles ButtonEdit.Click
@@ -134,6 +171,14 @@ Public Class InputCustomerDetails
     End Sub
 
     Private Sub ButtonDelete_Click(sender As Object, e As EventArgs) Handles ButtonDelete.Click
+        ' Delete the verification row from the 2nd screen if the cashier hits Delete
+        For i As Integer = secondscreen.ListViewCustomerView.Items.Count - 1 To 0 Step -1
+            If secondscreen.ListViewCustomerView.Items(i).Tag IsNot Nothing AndAlso secondscreen.ListViewCustomerView.Items(i).Tag.ToString() = "TEMP_NAME" Then
+                secondscreen.ListViewCustomerView.Items.RemoveAt(i)
+            End If
+        Next
+
+
         If DataGridViewCustomers.SelectedRows.Count = 0 Then
             MessageBox.Show("Please select a row to delete.", "No Selection")
             Exit Sub
@@ -193,10 +238,12 @@ Public Class InputCustomerDetails
                 Exit Sub
             End Try
         End Using
-
         ' Close the form and return to POS
+        mainform.CurrentCustomerName = _pendingCustomers(0).Name
+        Me.DialogResult = DialogResult.OK
         _pendingCustomers.Clear()
         Me.Close()
+
     End Sub
 
     Private Sub RefreshGrid()
