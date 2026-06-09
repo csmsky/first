@@ -32,14 +32,11 @@ Public Class InputCustomerDetails
     Private Sub InputCustomerDetails_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
         ' --- Make the form taller to fit the new controls ---
-        Me.ClientSize = New System.Drawing.Size(580, 600)
+        Me.ClientSize = New System.Drawing.Size(580, 510)
 
         ' --- Move the existing "(+)Add" button up a bit to make room ---
-        Button1.Location = New System.Drawing.Point(368, 210)
+        Button1.Location = New System.Drawing.Point(280, 210)
         Button1.Size = New System.Drawing.Size(114, 40)
-
-        ' --- Fix the Guest Details GroupBox from clipping the Add button ---
-        GroupBoxGuestDetails.Width = 545
 
         ' --- DataGridView to show pending entries ---
         DataGridViewCustomers.Location = New System.Drawing.Point(8, 300)
