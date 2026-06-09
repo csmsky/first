@@ -1200,35 +1200,53 @@ Public Class mainform
     End Sub
 
     Private Sub auto()
-        Dim seq As Single
+        Dim seq As Long = 0
+        Dim didReset As Boolean = False
 
-        conn.Open()
-        Dim qd As String = "SELECT MAX(or_no) AS receipt FROM or_tbl WHERE pos_id = '" & LabelPOSno.Text & "'"
-        Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
-        Dim rdr As MySqlDataReader = cmd.ExecuteReader()
-        While rdr.Read
-            seq = Val(rdr.Item("receipt").ToString) + 1
-        End While
-        Select Case Len(Trim(seq))
-            Case 1 : TextBoxBarcode.Text = "000000000000000" + Trim(Str(seq))
-            Case 2 : TextBoxBarcode.Text = "00000000000000" + Trim(Str(seq))
-            Case 3 : TextBoxBarcode.Text = "0000000000000" + Trim(Str(seq))
-            Case 4 : TextBoxBarcode.Text = "000000000000" + Trim(Str(seq))
-            Case 5 : TextBoxBarcode.Text = "00000000000" + Trim(Str(seq))
-            Case 6 : TextBoxBarcode.Text = "0000000000" + Trim(Str(seq))
-            Case 7 : TextBoxBarcode.Text = "000000000" + Trim(Str(seq))
-            Case 8 : TextBoxBarcode.Text = "00000000" + Trim(Str(seq))
-            Case 9 : TextBoxBarcode.Text = "0000000" + Trim(Str(seq))
-            Case 10 : TextBoxBarcode.Text = "000000" + Trim(Str(seq))
-            Case 11 : TextBoxBarcode.Text = "00000" + Trim(Str(seq))
-            Case 12 : TextBoxBarcode.Text = "0000" + Trim(Str(seq))
-            Case 13 : TextBoxBarcode.Text = "000" + Trim(Str(seq))
-            Case 14 : TextBoxBarcode.Text = "00" + Trim(Str(seq))
-            Case 15 : TextBoxBarcode.Text = "0" + Trim(Str(seq))
-        End Select
-        conn.Close()
+        Try
+            conn.Open()
+            Dim qd As String = "SELECT MAX(or_no) AS receipt FROM or_tbl WHERE pos_id = '" & LabelPOSno.Text & "'"
+            Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
+            Dim rdr As MySqlDataReader = cmd.ExecuteReader()
+            While rdr.Read
+                Dim valStr As String = rdr.Item("receipt").ToString()
+                Dim parsedSeq As Long = 0
+                If Long.TryParse(valStr, parsedSeq) Then
+                    seq = parsedSeq + 1
+                Else
+                    seq = 1
+                End If
+            End While
+            rdr.Close()
+            conn.Close()
+        Catch ex As Exception
+            If conn.State = ConnectionState.Open Then conn.Close()
+            seq = 1
+        End Try
 
+        ' Check if OR has reached the 16-digit max
+        If seq > 9999999999999999L Then
+            seq = 1
+            didReset = True
+
+            ' Increment rst_cnt in accumulated_amount_tbl
+            Try
+                conn.Open()
+                Dim updRst As String = "UPDATE accumulated_amount_tbl SET rst_cnt = IFNULL(rst_cnt, 0) + 1 " &
+                                       "WHERE pos_id = '" & LabelPOSno.Text & "' AND user_id = '" & LabelCashierID.Text & "' " &
+                                       "AND payment_date = '" & todaysdate & "'"
+                Dim cmdUpd As New MySqlCommand(updRst) With {.Connection = conn}
+                cmdUpd.ExecuteNonQuery()
+                conn.Close()
+            Catch ex As Exception
+                If conn.State = ConnectionState.Open Then conn.Close()
+            End Try
+        End If
+
+        ' Format to exactly 16 digits
+        TextBoxBarcode.Text = seq.ToString("D16")
     End Sub
+
 
     Private Sub TextBoxBarcode_TextChanged(sender As Object, e As EventArgs) Handles TextBoxBarcode.TextChanged
         'assigning value of barcode
@@ -7031,5 +7049,9 @@ Public Class mainform
         Button200.Enabled = False
         Button500.Enabled = False
         Button1000.Enabled = False
+    End Sub
+
+    Private Sub Label1_Click(sender As Object, e As EventArgs) Handles Label1.Click
+
     End Sub
 End Class

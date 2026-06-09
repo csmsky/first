@@ -182,7 +182,7 @@
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>WosjUf2Bhvqc7ov3DPpWCT23WqiXT5XadbU7Lp83igo=</dsig:DigestValue>
+        <dsig:DigestValue>jHek43j9/RzraOHK3H4uyI+H9z60zQGWelo2JLe3/SA=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -199,14 +199,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="METTA_CITY.exe" size="3640320">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="METTA_CITY.exe" size="3643392">
       <assemblyIdentity name="METTA_CITY" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>4vpxvWLVAiqzddW8l+1tIIqlYxJbxJ7LnWziwmFJQP4=</dsig:DigestValue>
+        <dsig:DigestValue>ki+TRxUJ2pjuhqwzq1OSbXAhMmHQe76+cx3pDukTEdA=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>

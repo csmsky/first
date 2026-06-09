@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\VINTA_POS"
   ],
-  "SelectedNode": "\\VINTA_POS.sln",
+  "SelectedNode": "\\VINTA_POS\\mainform.vb",
   "PreviewInSolutionExplorer": false
 }

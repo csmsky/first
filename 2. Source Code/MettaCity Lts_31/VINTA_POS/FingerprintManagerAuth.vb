@@ -1,9 +1,9 @@
-﻿
-Imports System.Threading
-    Imports System.Threading.Tasks
-    Imports DPUruNet
-    Imports DPUruNet.Constants
-    Imports MySql.Data.MySqlClient
+﻿Imports System.Threading
+Imports System.Threading.Tasks
+Imports DPUruNet
+Imports DPUruNet.Constants
+Imports MySql.Data.MySqlClient
+Imports System.Windows.Forms ' Added to allow the InputBox popup to render
 
 Public Class FingerprintManagerAuth
 
@@ -36,26 +36,44 @@ Public Class FingerprintManagerAuth
         Try
             SetStatus("Place MANAGER finger to authorize...")
 
-            ' Run capture+compare on a background thread
-            Dim empId As String = Await Task.Run(Function()
-                                                     If ct.IsCancellationRequested Then Return ""
-                                                     Return ScanAndMatchManager(ct)
-                                                 End Function, ct)
+            ' =========================================================================
+            ' BYPASS INJECTED HERE (Original background scanner task commented out)
+            ' =========================================================================
+            ' Dim empId As String = Await Task.Run(Function()
+            '                                          If ct.IsCancellationRequested Then Return ""
+            '                                          Return ScanAndMatchManager(ct)
+            '                                      End Function, ct)
+
+            Dim inputId As String = InputBox("TEST MODE: Enter a Manager User ID to bypass fingerprint scan:", "Manager Authorization Bypass", "")
+
+            If String.IsNullOrWhiteSpace(inputId) Then
+                SetStatus("Cancelled.")
+                RaiseEvent Failed("Cancelled.")
+                Return ""
+            End If
+
+            Dim empId As String = ""
+            Dim isMgr As Boolean = Await Task.Run(Function() IsManager(inputId), ct)
+
+            If isMgr Then
+                empId = inputId
+            End If
+            ' =========================================================================
 
             If Not String.IsNullOrWhiteSpace(empId) Then
-                                                         SetStatus("Authorized ✅ Manager: " & empId)
-                                                         RaiseEvent Authorized(empId)
-                                                         Return empId
-                                                     Else
-                                                         If ct.IsCancellationRequested Then
-                                                             SetStatus("Cancelled.")
-                                                             RaiseEvent Failed("Cancelled.")
-                                                         Else
-                                                             SetStatus("Not authorized.")
-                                                             RaiseEvent Failed("No match / not manager.")
-                                                         End If
-                                                         Return ""
-                                                     End If
+                SetStatus("Authorized ✅ Manager: " & empId)
+                RaiseEvent Authorized(empId)
+                Return empId
+            Else
+                If ct.IsCancellationRequested Then
+                    SetStatus("Cancelled.")
+                    RaiseEvent Failed("Cancelled.")
+                Else
+                    SetStatus("Not authorized.")
+                    RaiseEvent Failed("No match / not manager.")
+                End If
+                Return ""
+            End If
 
         Catch ex As OperationCanceledException
             SetStatus("Cancelled.")

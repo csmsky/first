@@ -1,4 +1,4 @@
-﻿Imports MySql.Data.MySqlClient
+Imports MySql.Data.MySqlClient
 Imports WindowsApplication1.ConfigClass
 
 Public Class InputCustomerDetails
@@ -10,6 +10,18 @@ Public Class InputCustomerDetails
     Private _transType As String = ""
     Private _currentOR As String = "" '<-- Variable to hold the OR number
 
+    ' In-memory pending list (NOT yet saved to DB)
+    Private _pendingCustomers As New List(Of CustomerInfo)
+
+    ' Track which row is being edited (-1 means adding new)
+    Private _editingIndex As Integer = -1
+
+    ' New controls added via code
+    Private WithEvents DataGridViewCustomers As New DataGridView()
+    Private WithEvents ButtonEdit As New Button()
+    Private WithEvents ButtonDelete As New Button()
+    Private WithEvents ButtonConfirm As New Button()
+
     ' Call this from your Main POS Form to pass the Type AND the OR Number
     Public Sub SetTransactionDetails(type As String, orNo As String)
         _transType = type
@@ -17,9 +29,53 @@ Public Class InputCustomerDetails
         Me.Text = "Enter Details for: " & type
     End Sub
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+    Private Sub InputCustomerDetails_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
-        auto()
+        ' --- Make the form taller to fit the new controls ---
+        Me.ClientSize = New System.Drawing.Size(580, 600)
+
+        ' --- Move the existing "(+)Add" button up a bit to make room ---
+        Button1.Location = New System.Drawing.Point(368, 210)
+        Button1.Size = New System.Drawing.Size(114, 40)
+
+        ' --- Fix the Guest Details GroupBox from clipping the Add button ---
+        GroupBoxGuestDetails.Width = 545
+
+        ' --- DataGridView to show pending entries ---
+        DataGridViewCustomers.Location = New System.Drawing.Point(8, 300)
+        DataGridViewCustomers.Size = New System.Drawing.Size(544, 150)
+        DataGridViewCustomers.AllowUserToAddRows = False
+        DataGridViewCustomers.AllowUserToDeleteRows = False
+        DataGridViewCustomers.ReadOnly = True
+        DataGridViewCustomers.MultiSelect = False
+        DataGridViewCustomers.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        DataGridViewCustomers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        DataGridViewCustomers.RowHeadersWidth = 30
+        Me.Controls.Add(DataGridViewCustomers)
+
+        ' --- Edit Button ---
+        ButtonEdit.Text = "Edit"
+        ButtonEdit.Location = New System.Drawing.Point(8, 460)
+        ButtonEdit.Size = New System.Drawing.Size(114, 40)
+        Me.Controls.Add(ButtonEdit)
+
+        ' --- Delete Button ---
+        ButtonDelete.Text = "Delete"
+        ButtonDelete.Location = New System.Drawing.Point(130, 460)
+        ButtonDelete.Size = New System.Drawing.Size(114, 40)
+        Me.Controls.Add(ButtonDelete)
+
+        ' --- Confirm & Save Button ---
+        ButtonConfirm.Text = "Confirm && Save"
+        ButtonConfirm.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Bold)
+        ButtonConfirm.Location = New System.Drawing.Point(368, 460)
+        ButtonConfirm.Size = New System.Drawing.Size(184, 40)
+        Me.Controls.Add(ButtonConfirm)
+
+        RefreshGrid()
+    End Sub
+
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
 
         ' Validation: Ensure Name, ID, and OR Number (Barcode) are filled out
         If String.IsNullOrWhiteSpace(TextBoxGuestName.Text) OrElse String.IsNullOrWhiteSpace(TextBoxGuestID.Text) Then
@@ -27,91 +83,183 @@ Public Class InputCustomerDetails
             Exit Sub
         End If
 
-        Using conn As New MySqlConnection(strConn)
+        ' Clean up the inputs
+        Dim cleanTIN As String = TextBoxGuestTIN.Text.Replace("-", "").Trim()
+
+        ' 1. Save to Memory ONLY (Database upload happens during Confirm & Save)
+        Dim newCustomer As New CustomerInfo With {
+            .Name = TextBoxGuestName.Text.Trim(),
+            .ID = TextBoxGuestID.Text.Trim(),
+            .TIN = cleanTIN,
+            .Address = TextBoxGuestAddress.Text.Trim(),
+            .TransType = _transType
+        }
+
+        If _editingIndex >= 0 AndAlso _editingIndex < _pendingCustomers.Count Then
+            ' Update existing entry
+            _pendingCustomers(_editingIndex) = newCustomer
+            _editingIndex = -1
+            Button1.Text = "(+)Add"
+        Else
+            ' Add to your global/shared list (in memory)
+            _pendingCustomers.Add(newCustomer)
+        End If
+
+        ' Notify the user it was added to the current transaction queue
+        MessageBox.Show($"{_transType} details added to the current transaction!", "Success")
+
+        ' Clear text boxes for the next entry
+        TextBoxGuestName.Clear()
+        TextBoxGuestID.Clear()
+        TextBoxGuestTIN.Clear()
+        TextBoxGuestAddress.Clear()
+
+        RefreshGrid()
+    End Sub
+
+    Private Sub ButtonEdit_Click(sender As Object, e As EventArgs) Handles ButtonEdit.Click
+        If DataGridViewCustomers.SelectedRows.Count = 0 Then
+            MessageBox.Show("Please select a row to edit.", "No Selection")
+            Exit Sub
+        End If
+
+        _editingIndex = DataGridViewCustomers.SelectedRows(0).Index
+
+        If _editingIndex < 0 OrElse _editingIndex >= _pendingCustomers.Count Then Exit Sub
+
+        Dim entry As CustomerInfo = _pendingCustomers(_editingIndex)
+        TextBoxGuestName.Text = entry.Name
+        TextBoxGuestID.Text = entry.ID
+        TextBoxGuestTIN.Text = entry.TIN
+        TextBoxGuestAddress.Text = entry.Address
+
+        Button1.Text = "Update"
+    End Sub
+
+    Private Sub ButtonDelete_Click(sender As Object, e As EventArgs) Handles ButtonDelete.Click
+        If DataGridViewCustomers.SelectedRows.Count = 0 Then
+            MessageBox.Show("Please select a row to delete.", "No Selection")
+            Exit Sub
+        End If
+
+        Dim idx As Integer = DataGridViewCustomers.SelectedRows(0).Index
+
+        If idx < 0 OrElse idx >= _pendingCustomers.Count Then Exit Sub
+
+        Dim result = MessageBox.Show("Remove this entry?", "Confirm Delete", MessageBoxButtons.YesNo)
+        If result = DialogResult.Yes Then
+            _pendingCustomers.RemoveAt(idx)
+            _editingIndex = -1
+            Button1.Text = "(+)Add"
+            TextBoxGuestName.Clear()
+            TextBoxGuestID.Clear()
+            TextBoxGuestTIN.Clear()
+            TextBoxGuestAddress.Clear()
+            RefreshGrid()
+        End If
+    End Sub
+
+    Private Sub ButtonConfirm_Click(sender As Object, e As EventArgs) Handles ButtonConfirm.Click
+        If _pendingCustomers.Count = 0 Then
+            MessageBox.Show("No customer details to save. Please add at least one entry.", "Empty List")
+            Exit Sub
+        End If
+
+        auto()
+
+        Using dbConn As New MySqlConnection(strConn)
             Try
-                conn.Open()
+                dbConn.Open()
 
-                Dim query As String = "INSERT INTO customer_tbl (or_no, name, id_no, tin_no, address, transType) VALUES (@or_no, @name, @id_no, @tin_no, @address, @transType)"
+                For Each cust As CustomerInfo In _pendingCustomers
+                    Dim query As String = "INSERT INTO customer_tbl (or_no, name, id_no, tin_no, address, transType) VALUES (@or_no, @name, @id_no, @tin_no, @address, @transType)"
 
-                Using cmd As New MySqlCommand(query, conn)
-                    cmd.Parameters.AddWithValue("@or_no", mainform.TextBoxBarcode.Text)
-                    cmd.Parameters.AddWithValue("@name", TextBoxGuestName.Text)
-                    cmd.Parameters.AddWithValue("@id_no", TextBoxGuestID.Text)
-                    cmd.Parameters.AddWithValue("@tin_no", TextBoxGuestTIN.Text)
-                    cmd.Parameters.AddWithValue("@address", TextBoxGuestAddress.Text)
-                    cmd.Parameters.AddWithValue("@transType", _transType)
+                    Using cmd As New MySqlCommand(query, dbConn)
+                        cmd.Parameters.AddWithValue("@or_no", mainform.TextBoxBarcode.Text)
+                        cmd.Parameters.AddWithValue("@name", cust.Name)
+                        cmd.Parameters.AddWithValue("@id_no", cust.ID)
+                        cmd.Parameters.AddWithValue("@tin_no", cust.TIN)
+                        cmd.Parameters.AddWithValue("@address", cust.Address)
+                        cmd.Parameters.AddWithValue("@transType", cust.TransType)
+                        cmd.ExecuteNonQuery()
+                    End Using
 
-                    cmd.ExecuteNonQuery()
-                End Using
+                    ' Add to your global/shared list
+                    cust.ORNumber = mainform.TextBoxBarcode.Text
+                    eJournalCustomerData.CustomerList.Add(cust)
+                Next
 
                 MessageBox.Show("Customer saved to database!", "Success")
 
-                ' Clean up the inputs
-                Dim cleanTIN As String = TextBoxGuestTIN.Text.Replace("-", "").Trim()
-
-                ' 1. Save to Memory ONLY (Database upload happens during printing)
-                Dim newCustomer As New CustomerInfo With {
-                    .Name = TextBoxGuestName.Text,
-                    .ID = TextBoxGuestID.Text,
-                    .TIN = cleanTIN,
-                    .Address = TextBoxGuestAddress.Text,
-                    .TransType = _transType
-                }
-
-                ' Add to your global/shared list
-                eJournalCustomerData.CustomerList.Add(newCustomer)
-
-
-                ' Notify the user it was added to the current transaction queue
-                MessageBox.Show($"{_transType} details added to the current transaction!", "Success")
-
-                ' Clear text boxes for the next entry
-                TextBoxGuestName.Clear()
-                TextBoxGuestID.Clear()
-                TextBoxGuestTIN.Clear()
-                TextBoxGuestAddress.Clear()
-
             Catch ex As Exception
                 MessageBox.Show("Error: " & ex.Message)
+                Exit Sub
             End Try
         End Using
 
         ' Close the form and return to POS
+        _pendingCustomers.Clear()
         Me.Close()
     End Sub
 
-    Private Sub InputCustomerDetails_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    Private Sub RefreshGrid()
+        Dim dt As New DataTable()
+        dt.Columns.Add("Name", GetType(String))
+        dt.Columns.Add("ID No.", GetType(String))
+        dt.Columns.Add("TIN", GetType(String))
+        dt.Columns.Add("Address", GetType(String))
+
+        For Each c As CustomerInfo In _pendingCustomers
+            dt.Rows.Add(c.Name, c.ID, c.TIN, c.Address)
+        Next
+
+        DataGridViewCustomers.DataSource = dt
     End Sub
 
     Private Sub auto()
-        Dim seq As Single
+        Dim seq As Long = 0
 
-        conn.Open()
-        Dim qd As String = "SELECT MAX(or_no) AS receipt FROM or_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "'"
-        Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
-        Dim rdr As MySqlDataReader = cmd.ExecuteReader()
-        While rdr.Read
-            seq = Val(rdr.Item("receipt").ToString) + 1
-        End While
-        Select Case Len(Trim(seq))
-            Case 1 : mainform.TextBoxBarcode.Text = "000000000000000" + Trim(Str(seq))
-            Case 2 : mainform.TextBoxBarcode.Text = "00000000000000" + Trim(Str(seq))
-            Case 3 : mainform.TextBoxBarcode.Text = "0000000000000" + Trim(Str(seq))
-            Case 4 : mainform.TextBoxBarcode.Text = "000000000000" + Trim(Str(seq))
-            Case 5 : mainform.TextBoxBarcode.Text = "00000000000" + Trim(Str(seq))
-            Case 6 : mainform.TextBoxBarcode.Text = "0000000000" + Trim(Str(seq))
-            Case 7 : mainform.TextBoxBarcode.Text = "000000000" + Trim(Str(seq))
-            Case 8 : mainform.TextBoxBarcode.Text = "00000000" + Trim(Str(seq))
-            Case 9 : mainform.TextBoxBarcode.Text = "0000000" + Trim(Str(seq))
-            Case 10 : mainform.TextBoxBarcode.Text = "000000" + Trim(Str(seq))
-            Case 11 : mainform.TextBoxBarcode.Text = "00000" + Trim(Str(seq))
-            Case 12 : mainform.TextBoxBarcode.Text = "0000" + Trim(Str(seq))
-            Case 13 : mainform.TextBoxBarcode.Text = "000" + Trim(Str(seq))
-            Case 14 : mainform.TextBoxBarcode.Text = "00" + Trim(Str(seq))
-            Case 15 : mainform.TextBoxBarcode.Text = "0" + Trim(Str(seq))
-        End Select
-        conn.Close()
+        Try
+            conn.Open()
+            Dim qd As String = "SELECT MAX(or_no) AS receipt FROM or_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "'"
+            Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
+            Dim rdr As MySqlDataReader = cmd.ExecuteReader()
+            While rdr.Read
+                Dim valStr As String = rdr.Item("receipt").ToString()
+                Dim parsedSeq As Long = 0
+                If Long.TryParse(valStr, parsedSeq) Then
+                    seq = parsedSeq + 1
+                Else
+                    seq = 1
+                End If
+            End While
+            rdr.Close()
+            conn.Close()
+        Catch ex As Exception
+            If conn.State = ConnectionState.Open Then conn.Close()
+            seq = 1
+        End Try
 
+        ' Check if OR has reached the 16-digit max
+        If seq > 9999999999999999L Then
+            seq = 1
+
+            ' Increment rst_cnt in accumulated_amount_tbl
+            Try
+                conn.Open()
+                Dim updRst As String = "UPDATE accumulated_amount_tbl SET rst_cnt = IFNULL(rst_cnt, 0) + 1 " &
+                                       "WHERE pos_id = '" & mainform.LabelPOSno.Text & "' AND user_id = '" & mainform.LabelCashierID.Text & "' " &
+                                       "AND payment_date = '" & Today.ToString("yyyy-MM-dd") & "'"
+                Dim cmdUpd As New MySqlCommand(updRst) With {.Connection = conn}
+                cmdUpd.ExecuteNonQuery()
+                conn.Close()
+            Catch ex As Exception
+                If conn.State = ConnectionState.Open Then conn.Close()
+            End Try
+        End If
+
+        ' Format to exactly 16 digits
+        mainform.TextBoxBarcode.Text = seq.ToString("D16")
     End Sub
 End Class
 

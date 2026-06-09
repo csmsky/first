@@ -610,7 +610,7 @@ Partial Class mainform
         Me.TextBoxChange.Margin = New System.Windows.Forms.Padding(4)
         Me.TextBoxChange.Multiline = True
         Me.TextBoxChange.Name = "TextBoxChange"
-        Me.TextBoxChange.Size = New System.Drawing.Size(111, 40)
+        Me.TextBoxChange.Size = New System.Drawing.Size(110, 40)
         Me.TextBoxChange.TabIndex = 347
         '
         'TextBoxMoney
@@ -666,10 +666,10 @@ Partial Class mainform
         Me.ButtonLogout.FlatStyle = System.Windows.Forms.FlatStyle.System
         Me.ButtonLogout.Font = New System.Drawing.Font("Microsoft Sans Serif", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.ButtonLogout.ForeColor = System.Drawing.Color.AliceBlue
-        Me.ButtonLogout.Location = New System.Drawing.Point(387, 4)
+        Me.ButtonLogout.Location = New System.Drawing.Point(385, 4)
         Me.ButtonLogout.Margin = New System.Windows.Forms.Padding(4)
         Me.ButtonLogout.Name = "ButtonLogout"
-        Me.ButtonLogout.Size = New System.Drawing.Size(155, 77)
+        Me.ButtonLogout.Size = New System.Drawing.Size(157, 77)
         Me.ButtonLogout.TabIndex = 328
         Me.ButtonLogout.Text = "Logout"
         Me.ButtonLogout.UseVisualStyleBackColor = False
@@ -1060,10 +1060,10 @@ Partial Class mainform
         Me.ButtonReport.FlatStyle = System.Windows.Forms.FlatStyle.System
         Me.ButtonReport.Font = New System.Drawing.Font("Microsoft Sans Serif", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.ButtonReport.ForeColor = System.Drawing.Color.AliceBlue
-        Me.ButtonReport.Location = New System.Drawing.Point(144, 4)
+        Me.ButtonReport.Location = New System.Drawing.Point(143, 4)
         Me.ButtonReport.Margin = New System.Windows.Forms.Padding(4)
         Me.ButtonReport.Name = "ButtonReport"
-        Me.ButtonReport.Size = New System.Drawing.Size(127, 77)
+        Me.ButtonReport.Size = New System.Drawing.Size(126, 77)
         Me.ButtonReport.TabIndex = 314
         Me.ButtonReport.Text = "Cash Management"
         Me.ButtonReport.UseVisualStyleBackColor = False
@@ -1075,7 +1075,7 @@ Partial Class mainform
         Me.ButtonTrainingMode.FlatStyle = System.Windows.Forms.FlatStyle.System
         Me.ButtonTrainingMode.Font = New System.Drawing.Font("Microsoft Sans Serif", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.ButtonTrainingMode.ForeColor = System.Drawing.Color.AliceBlue
-        Me.ButtonTrainingMode.Location = New System.Drawing.Point(279, 4)
+        Me.ButtonTrainingMode.Location = New System.Drawing.Point(277, 4)
         Me.ButtonTrainingMode.Margin = New System.Windows.Forms.Padding(4)
         Me.ButtonTrainingMode.Name = "ButtonTrainingMode"
         Me.ButtonTrainingMode.Size = New System.Drawing.Size(100, 77)
@@ -1328,7 +1328,7 @@ Partial Class mainform
         Me.ComboBoxPaymentMethod.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
         Me.ComboBoxPaymentMethod.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.2!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.ComboBoxPaymentMethod.FormattingEnabled = True
-        Me.ComboBoxPaymentMethod.Location = New System.Drawing.Point(252, 17)
+        Me.ComboBoxPaymentMethod.Location = New System.Drawing.Point(250, 17)
         Me.ComboBoxPaymentMethod.Margin = New System.Windows.Forms.Padding(3, 2, 3, 2)
         Me.ComboBoxPaymentMethod.Name = "ComboBoxPaymentMethod"
         Me.ComboBoxPaymentMethod.Size = New System.Drawing.Size(160, 28)
@@ -1474,7 +1474,7 @@ Partial Class mainform
         Me.TableLayoutPanel3.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50.77519!))
         Me.TableLayoutPanel3.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 49.22481!))
         Me.TableLayoutPanel3.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 108.0!))
-        Me.TableLayoutPanel3.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 162.0!))
+        Me.TableLayoutPanel3.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 164.0!))
         Me.TableLayoutPanel3.Controls.Add(Me.ButtonReport, 1, 0)
         Me.TableLayoutPanel3.Controls.Add(Me.ButtonLogout, 3, 0)
         Me.TableLayoutPanel3.Controls.Add(Me.ButtonTrainingMode, 2, 0)
@@ -1497,7 +1497,7 @@ Partial Class mainform
         Me.Button13.Location = New System.Drawing.Point(4, 4)
         Me.Button13.Margin = New System.Windows.Forms.Padding(4)
         Me.Button13.Name = "Button13"
-        Me.Button13.Size = New System.Drawing.Size(132, 77)
+        Me.Button13.Size = New System.Drawing.Size(131, 77)
         Me.Button13.TabIndex = 345
         Me.Button13.Text = "Re-print Sticker"
         Me.Button13.UseVisualStyleBackColor = False
@@ -1893,7 +1893,7 @@ Partial Class mainform
         Me.TableLayoutPanel12.ColumnCount = 3
         Me.TableLayoutPanel12.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 47.93103!))
         Me.TableLayoutPanel12.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 52.06897!))
-        Me.TableLayoutPanel12.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 208.0!))
+        Me.TableLayoutPanel12.ColumnStyles.Add(New System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 210.0!))
         Me.TableLayoutPanel12.Controls.Add(Me.TextBoxChange, 0, 0)
         Me.TableLayoutPanel12.Controls.Add(Me.Label4, 1, 0)
         Me.TableLayoutPanel12.Controls.Add(Me.ComboBoxPaymentMethod, 2, 0)
@@ -1912,7 +1912,7 @@ Partial Class mainform
         Me.Label4.AutoSize = True
         Me.Label4.Font = New System.Drawing.Font("Microsoft Sans Serif", 7.8!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Label4.ForeColor = System.Drawing.SystemColors.ActiveCaptionText
-        Me.Label4.Location = New System.Drawing.Point(123, 14)
+        Me.Label4.Location = New System.Drawing.Point(122, 14)
         Me.Label4.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.Label4.Name = "Label4"
         Me.Label4.Size = New System.Drawing.Size(75, 34)
