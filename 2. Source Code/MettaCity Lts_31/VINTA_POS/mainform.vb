@@ -5430,8 +5430,8 @@ Public Class mainform
 
         ' Set thermal paper size: 3 inches x 80 mm (approx. 300 x 800 pixels)
         Dim thermalPaperWidth As Integer = 300  ' 3 inches in 1/100ths of an inch
-        Dim thermalPaperHeight As Integer = 0 ' 8 inches (about 80mm) in 1/100ths of an inch
-        'Dim thermalPaperHeight As Integer = 1800 ' 8 inches (about 80mm) in 1/100ths of an inch
+        'Dim thermalPaperHeight As Integer = 0 ' 8 inches (about 80mm) in 1/100ths of an inch
+        Dim thermalPaperHeight As Integer = 1800 ' 8 inches (about 80mm) in 1/100ths of an inch
         Dim paperSize As New PaperSize("Thermal Paper", thermalPaperWidth, thermalPaperHeight)
         printDocument.DefaultPageSettings.PaperSize = paperSize
 
@@ -5708,9 +5708,9 @@ Public Class mainform
                                                 e.HasMorePages = False
                                             End Sub
         ' Create the PrintPreviewDialog
-        'Dim printPreview As New PrintPreviewDialog()
-        'printPreview.Document = printDocument
-        'printPreview.ShowDialog()  ' Show the print preview dialog
+        Dim printPreview As New PrintPreviewDialog()
+        printPreview.Document = printDocument
+        printPreview.ShowDialog()  ' Show the print preview dialog
 
         'Directly send to printer
         printDocument.Print()

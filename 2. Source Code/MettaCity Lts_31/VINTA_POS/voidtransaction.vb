@@ -1,4 +1,4 @@
-﻿Imports System.Data
+Imports System.Data
 Imports System.IO
 Imports MySql.Data.MySqlClient
 Imports System.Drawing.Printing
@@ -201,6 +201,7 @@ Public Class voidtransaction
                     cmd.Parameters.Add("@p_pos_id", MySqlDbType.Int32).Value = posId
                     cmd.Parameters.Add("@p_payment_date", MySqlDbType.Date).Value = Date.Today
                     cmd.Parameters.Add("@p_void_no", MySqlDbType.VarChar).Value = LabelVoidNo.Text.Trim()
+                    cmd.Parameters.Add("@p_rst_cnt_v", MySqlDbType.Int32).Value = mainform.voidRstCnt
                     cmd.Parameters.Add("@p_manager_id", MySqlDbType.VarChar).Value = TextBoxUserID.Text.Trim()
                     cmd.Parameters.Add("@p_cashier_id", MySqlDbType.VarChar).Value = mainform.LabelCashierID.Text.Trim()
 
@@ -831,7 +832,7 @@ Public Class voidtransaction
                             conn.Close()
 
                             ''INSERT into void_tbl
-                            Dim AA As String = "INSERT INTO void_tbl (void_no, rst_cnt, or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, void_by, upload)
+                            Dim AA As String = "INSERT INTO void_tbl (void_no, rst_cnt_v, or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, void_by, upload)
                             SELECT '" & LabelVoidNo.Text & "', " & mainform.voidRstCnt & ", or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, '" & TextBoxUserID.Text & "', 'no' FROM or_tbl WHERE or_no = '" & TextBoxORNumber.Text & "'"
 
 
@@ -1043,7 +1044,7 @@ Public Class voidtransaction
         mainform.voidRstCnt = 0
 
         conn.Open()
-        Dim qd As String = "SELECT void_no, rst_cnt FROM void_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "' ORDER BY payment_date DESC, payment_time DESC LIMIT 1"
+        Dim qd As String = "SELECT void_no, rst_cnt_v FROM void_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "' ORDER BY payment_date DESC, payment_time DESC LIMIT 1"
         Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
         Dim rdr As MySqlDataReader = cmd.ExecuteReader()
         If rdr.Read() Then
@@ -1058,8 +1059,8 @@ Public Class voidtransaction
                     End If
                 End If
             End If
-            If Not IsDBNull(rdr("rst_cnt")) Then
-                mainform.voidRstCnt = Convert.ToInt32(rdr("rst_cnt").ToString())
+            If Not IsDBNull(rdr("rst_cnt_v")) Then
+                mainform.voidRstCnt = Convert.ToInt32(rdr("rst_cnt_v").ToString())
             End If
         End If
         rdr.Close()
