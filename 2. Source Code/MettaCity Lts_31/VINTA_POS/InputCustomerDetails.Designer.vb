@@ -96,6 +96,8 @@ Partial Class InputCustomerDetails
         '
         'TextBoxGuestName
         '
+        Me.TextBoxGuestName.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend
+        Me.TextBoxGuestName.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource
         Me.TextBoxGuestName.Location = New System.Drawing.Point(168, 48)
         Me.TextBoxGuestName.Name = "TextBoxGuestName"
         Me.TextBoxGuestName.Size = New System.Drawing.Size(314, 27)

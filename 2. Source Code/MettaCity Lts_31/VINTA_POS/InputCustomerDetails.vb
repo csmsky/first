@@ -35,6 +35,22 @@ Public Class InputCustomerDetails
 
 
     Private Sub InputCustomerDetails_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Load all previous customer names into the Search Bar memory
+        Try
+            Dim nameCollection As New AutoCompleteStringCollection()
+            Using dbConn As New MySqlConnection(strConn)
+                dbConn.Open()
+                Using cmd As New MySqlCommand("SELECT DISTINCT name FROM customer_tbl", dbConn)
+                    Using reader As MySqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            nameCollection.Add(reader("name").ToString())
+                        End While
+                    End Using
+                End Using
+            End Using
+            TextBoxGuestName.AutoCompleteCustomSource = nameCollection
+        Catch ex As Exception
+        End Try
 
         ' --- Make the form taller to fit the new controls ---
         Me.ClientSize = New System.Drawing.Size(580, 510)
@@ -214,15 +230,14 @@ Public Class InputCustomerDetails
                 dbConn.Open()
 
                 For Each cust As CustomerInfo In _pendingCustomers
-                    Dim query As String = "INSERT INTO customer_tbl (or_no, name, id_no, tin_no, address, transType) VALUES (@or_no, @name, @id_no, @tin_no, @address, @transType)"
-
-                    Using cmd As New MySqlCommand(query, dbConn)
-                        cmd.Parameters.AddWithValue("@or_no", mainform.TextBoxBarcode.Text)
-                        cmd.Parameters.AddWithValue("@name", cust.Name)
-                        cmd.Parameters.AddWithValue("@id_no", cust.ID)
-                        cmd.Parameters.AddWithValue("@tin_no", cust.TIN)
-                        cmd.Parameters.AddWithValue("@address", cust.Address)
-                        cmd.Parameters.AddWithValue("@transType", cust.TransType)
+                    Using cmd As New MySqlCommand("insert_customer_procedure", dbConn)
+                        cmd.CommandType = CommandType.StoredProcedure
+                        cmd.Parameters.AddWithValue("@p_or_no", mainform.TextBoxBarcode.Text)
+                        cmd.Parameters.AddWithValue("@p_name", cust.Name)
+                        cmd.Parameters.AddWithValue("@p_id_no", cust.ID)
+                        cmd.Parameters.AddWithValue("@p_tin_no", cust.TIN)
+                        cmd.Parameters.AddWithValue("@p_address", cust.Address)
+                        cmd.Parameters.AddWithValue("@p_transType", cust.TransType)
                         cmd.ExecuteNonQuery()
                     End Using
 
@@ -304,6 +319,43 @@ Public Class InputCustomerDetails
 
         ' Format to exactly 16 digits
         mainform.TextBoxBarcode.Text = seq.ToString("D16")
+    End Sub
+
+    Private Sub TextBoxGuestName_TextChanged(sender As Object, e As EventArgs) Handles TextBoxGuestName.TextChanged
+
+    End Sub
+
+    Private Sub TextBoxGuestName_Leave(sender As Object, e As EventArgs) Handles TextBoxGuestName.Leave
+        ' If the name box is blank, don't do anything
+        If String.IsNullOrWhiteSpace(TextBoxGuestName.Text) Then Exit Sub
+
+        ' Search the database for this name to see if they are a returning customer!
+        Try
+            Using dbConn As New MySqlConnection(strConn)
+                dbConn.Open()
+                Dim query As String = "SELECT id_no, tin_no, address FROM customer_tbl WHERE name = @name LIMIT 1"
+
+                Using cmd As New MySqlCommand(query, dbConn)
+                    cmd.Parameters.AddWithValue("@name", TextBoxGuestName.Text)
+
+                    Using reader As MySqlDataReader = cmd.ExecuteReader()
+                        If reader.Read() Then
+                            ' BINGO! We found a match. Auto-fill the rest of the boxes!
+                            TextBoxGuestID.Text = reader("id_no").ToString()
+                            TextBoxGuestTIN.Text = reader("tin_no").ToString()
+                            TextBoxGuestAddress.Text = reader("address").ToString()
+                        End If
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            ' If the database doesn't connect, just fail silently so it doesn't interrupt the cashier
+        End Try
+
+    End Sub
+
+    Private Sub GroupBoxGuestDetails_Enter(sender As Object, e As EventArgs) Handles GroupBoxGuestDetails.Enter
+
     End Sub
 End Class
 

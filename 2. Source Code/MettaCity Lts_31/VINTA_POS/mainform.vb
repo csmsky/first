@@ -3529,6 +3529,29 @@ Public Class mainform
             ButtonAddItem.Enabled = False
             Button14.Enabled = False
 
+            ' Save Guest to Database Customer
+            If CurrentCustomerName = "Guest" Then
+                Try
+                    Using dbConn As New MySqlConnection(strConn)
+                        dbConn.Open()
+                        Using cmd As New MySqlCommand("insert_customer_procedure", dbConn)
+                            cmd.CommandType = CommandType.StoredProcedure
+                            cmd.Parameters.AddWithValue("@p_or_no", TextBoxBarcode.Text)
+                            cmd.Parameters.AddWithValue("@p_name", "Guest")
+                            cmd.Parameters.AddWithValue("@p_id_no", "N/A")
+                            cmd.Parameters.AddWithValue("@p_tin_no", "N/A")
+                            cmd.Parameters.AddWithValue("@p_address", "N/A")
+                            cmd.Parameters.AddWithValue("@p_transType", LabelType.Text)
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    End Using
+                Catch ex As Exception
+                End Try
+            End If
+
+            ' Clear out the name for the next item!
+            CurrentCustomerName = ""
+
             ' Clear out the name for the next item!
             CurrentCustomerName = ""
 
