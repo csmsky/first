@@ -69,6 +69,8 @@ Public Class mainform
     Dim cost As String
 
     Private _detailsForm As New InputCustomerDetails()
+    Public rstCnt As Integer = 0
+    Public voidRstCnt As Integer = 0
 
     'Public Sub OnThreadException(ByVal sender As Object, ByVal e As Threading.ThreadExceptionEventArgs)
     '    MessageBox.Show(e.Exception.Message)
@@ -1204,51 +1206,49 @@ Public Class mainform
 
     Private Sub auto()
         Dim seq As Long = 0
-        Dim didReset As Boolean = False
+        rstCnt = 0
 
-        Try
-            conn.Open()
-            Dim qd As String = "SELECT MAX(or_no) AS receipt FROM or_tbl WHERE pos_id = '" & LabelPOSno.Text & "'"
-            Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
-            Dim rdr As MySqlDataReader = cmd.ExecuteReader()
-            While rdr.Read
-                Dim valStr As String = rdr.Item("receipt").ToString()
-                Dim parsedSeq As Long = 0
-                If Long.TryParse(valStr, parsedSeq) Then
-                    seq = parsedSeq + 1
+        conn.Open()
+        Dim qd As String = "SELECT or_no, rst_cnt FROM or_tbl WHERE pos_id = '" & LabelPOSno.Text & "' ORDER BY id DESC LIMIT 1"
+        Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
+        Dim rdr As MySqlDataReader = cmd.ExecuteReader()
+        If rdr.Read() Then
+            If Not IsDBNull(rdr("or_no")) Then
+                Dim orNoStr As String = rdr("or_no").ToString()
+                If Long.TryParse(orNoStr, seq) Then
+                    ' Successfully parsed exact Long, preventing precision loss
                 Else
-                    seq = 1
+                    ' Fallback for scientific notation corrupted strings like "000000000001E+16"
+                    Dim parsedVal As Double = 0
+                    If Double.TryParse(orNoStr, parsedVal) Then
+                        seq = Convert.ToInt64(parsedVal)
+                    End If
                 End If
-            End While
-            rdr.Close()
-            conn.Close()
-        Catch ex As Exception
-            If conn.State = ConnectionState.Open Then conn.Close()
-            seq = 1
-        End Try
+            End If
+            If Not IsDBNull(rdr("rst_cnt")) Then
+                rstCnt = Convert.ToInt32(rdr("rst_cnt").ToString())
+            End If
+        End If
+        rdr.Close()
 
-        ' Check if OR has reached the 16-digit max
-        If seq > 9999999999999999L Then
+        If seq >= 9999999999999999 Then
             seq = 1
-            didReset = True
-
-            ' Increment rst_cnt in accumulated_amount_tbl
-            Try
-                conn.Open()
-                Dim updRst As String = "UPDATE accumulated_amount_tbl SET rst_cnt = IFNULL(rst_cnt, 0) + 1 " &
-                                       "WHERE pos_id = '" & LabelPOSno.Text & "' AND user_id = '" & LabelCashierID.Text & "' " &
-                                       "AND payment_date = '" & todaysdate & "'"
-                Dim cmdUpd As New MySqlCommand(updRst) With {.Connection = conn}
-                cmdUpd.ExecuteNonQuery()
-                conn.Close()
-            Catch ex As Exception
-                If conn.State = ConnectionState.Open Then conn.Close()
-            End Try
+            rstCnt += 1
+        Else
+            seq += 1
         End If
 
-        ' Format to exactly 16 digits
         TextBoxBarcode.Text = seq.ToString("D16")
+
+        Dim lblReset As Control = Me.Controls.Find("LabelReset", True).FirstOrDefault()
+        If lblReset IsNot Nothing Then
+            lblReset.Text = rstCnt.ToString()
+        End If
+
+        conn.Close()
+
     End Sub
+
 
 
     Private Sub TextBoxBarcode_TextChanged(sender As Object, e As EventArgs) Handles TextBoxBarcode.TextChanged
@@ -5233,6 +5233,11 @@ Public Class mainform
                             cmd.Parameters.AddWithValue("p_updated", "no")
                             cmd.ExecuteNonQuery()
 
+                        End Using
+
+                        Using cmdRst As New MySqlCommand("UPDATE or_tbl SET rst_cnt = @rst_cnt WHERE id = LAST_INSERT_ID()", conn, tx)
+                            cmdRst.Parameters.AddWithValue("@rst_cnt", rstCnt)
+                            cmdRst.ExecuteNonQuery()
                         End Using
 
                         ' e_journal_tbl

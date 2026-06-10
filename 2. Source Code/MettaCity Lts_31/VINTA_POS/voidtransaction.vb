@@ -252,7 +252,7 @@ Public Class voidtransaction
                 MsgBox("No data recorded!")
             Else
                 'MsgBox("Voiding Service Invoice not successful! " & msg, MsgBoxStyle.Critical)
-                MsgBox("Voiding Service Invoice not successful!")
+                MsgBox("Voiding Service Invoice not successful! Error: " & msg)
             End If
 
         Catch ex As Exception
@@ -831,8 +831,10 @@ Public Class voidtransaction
                             conn.Close()
 
                             ''INSERT into void_tbl
-                            Dim AA As String = "INSERT INTO void_tbl (void_no, or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, void_by, upload)
-                            SELECT '" & LabelVoidNo.Text & "', or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, '" & TextBoxUserID.Text & "', 'no' FROM or_tbl WHERE or_no = '" & TextBoxORNumber.Text & "'"
+                            Dim AA As String = "INSERT INTO void_tbl (void_no, rst_cnt, or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, void_by, upload)
+                            SELECT '" & LabelVoidNo.Text & "', " & mainform.voidRstCnt & ", or_no, payment_date, payment_time, pos_id, user_id, base_price, vatable, vat_exempt, zero_rated, vat, discount, total_amount, void_type, '" & TextBoxUserID.Text & "', 'no' FROM or_tbl WHERE or_no = '" & TextBoxORNumber.Text & "'"
+
+
                             Dim cmmd As New MySqlCommand(AA) With {.Connection = conn}
                             MsgBox("AFFTER INSERTING TO VOID TABLE")
                             Try
@@ -1037,28 +1039,45 @@ Public Class voidtransaction
     End Sub
 
     Private Sub auto()
-        'for generating Void No.
-        Dim seq As Single
+        Dim seq As Long = 0
+        mainform.voidRstCnt = 0
+
         conn.Open()
-        Dim qd As String = "Select count(*) AS void FROM void_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "'"
+        Dim qd As String = "SELECT void_no, rst_cnt FROM void_tbl WHERE pos_id = '" & mainform.LabelPOSno.Text & "' ORDER BY payment_date DESC, payment_time DESC LIMIT 1"
         Dim cmd As New MySqlCommand(qd) With {.Connection = conn}
         Dim rdr As MySqlDataReader = cmd.ExecuteReader()
-        While rdr.Read
-            seq = Val(rdr.Item("void").ToString) + 1
-        End While
-        Select Case Len(Trim(seq))
-            Case 1 : LabelVoidNo.Text = "000000000" + Trim(Str(seq))
-            Case 2 : LabelVoidNo.Text = "00000000" + Trim(Str(seq))
-            Case 3 : LabelVoidNo.Text = "0000000" + Trim(Str(seq))
-            Case 4 : LabelVoidNo.Text = "000000" + Trim(Str(seq))
-            Case 5 : LabelVoidNo.Text = "00000" + Trim(Str(seq))
-            Case 6 : LabelVoidNo.Text = "0000" + Trim(Str(seq))
-            Case 7 : LabelVoidNo.Text = "000" + Trim(Str(seq))
-            Case 8 : LabelVoidNo.Text = "00" + Trim(Str(seq))
-            Case 9 : LabelVoidNo.Text = "0" + Trim(Str(seq))
-        End Select
+        If rdr.Read() Then
+            If Not IsDBNull(rdr("void_no")) Then
+                Dim voidNoStr As String = rdr("void_no").ToString()
+                If Long.TryParse(voidNoStr, seq) Then
+                    ' Successfully parsed exact Long
+                Else
+                    Dim parsedVal As Double = 0
+                    If Double.TryParse(voidNoStr, parsedVal) Then
+                        seq = Convert.ToInt64(parsedVal)
+                    End If
+                End If
+            End If
+            If Not IsDBNull(rdr("rst_cnt")) Then
+                mainform.voidRstCnt = Convert.ToInt32(rdr("rst_cnt").ToString())
+            End If
+        End If
+        rdr.Close()
+
+        ' Check for 10-digit maximum
+        If seq >= 9999999999 Then
+            seq = 1
+            mainform.voidRstCnt += 1
+        Else
+            seq += 1
+        End If
+
+        ' Format to exactly 10 digits
+        LabelVoidNo.Text = seq.ToString("D10")
+
         conn.Close()
     End Sub
+
 
     Private Async Sub voidtransaction_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
