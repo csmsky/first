@@ -41,6 +41,7 @@ Module EJournalWriter
             file.WriteLine("=========================================")
             file.WriteLine(DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"))
             file.WriteLine("SI #: " & orNo)
+            file.WriteLine("Reset Counter: " & mainform.rstCnt.ToString())
             file.WriteLine("==========================================")
             file.WriteLine("Description   Qty     U.Price     Amount")
             file.WriteLine("==========================================")

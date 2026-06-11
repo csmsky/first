@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Drawing.Printing
 Imports System.IO.Ports
 Imports WindowsApplication1.ConfigClass
@@ -868,6 +868,7 @@ Public Class mainform
                             file.WriteLine("----------------------------------------")
                             file.WriteLine(DateTime.Now.ToString("yyyy/MM/dd HH:mm"))
                             file.WriteLine("OR #: " & TextBoxBarcode.Text & "    PHP")
+                            file.WriteLine("Reset Counter: " & rstCnt.ToString())
                             file.WriteLine("----------------------------------------")
 
                             file.WriteLine("VESSEL ID                           " & comb)
@@ -3985,6 +3986,7 @@ Public Class mainform
                     file.WriteLine("----------------------------------------")
                     file.WriteLine(DateTime.Now.ToString("yyyy/MM/dd HH:mm"))
                     file.WriteLine("OR #: " & TextBoxBarcode.Text & "    PHP")
+                    file.WriteLine("Reset Counter: " & rstCnt.ToString())
                     file.WriteLine("----------------------------------------")
                     'file.WriteLine("NAME                               " & fname.Text & " " & lname.Text)
                     'file.WriteLine("VESSEL ID                          ")

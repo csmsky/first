@@ -64,7 +64,9 @@ Public Class PrintingOR
         yPos += 20
         graphics.DrawString("Date: " & DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"), font, brush, 100, yPos)
         yPos += 20
-        graphics.DrawString("SI #: " & totalDue, font, brush, 100, yPos)
+        graphics.DrawString("SI #: " & saleInovice, font, brush, 100, yPos) 'added
+        yPos += 20                                                          'added
+        graphics.DrawString("Reset Counter: " & mainform.rstCnt.ToString(), font, brush, 100, yPos)  'added
         yPos += 20
         graphics.DrawString("========================================", font, brush, 100, yPos)
         yPos += 20
